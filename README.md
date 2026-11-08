@@ -2,6 +2,8 @@
 
 ## Quick start (Windows PowerShell)
 
+Drive link for demo and summary pdf = https://drive.google.com/drive/folders/11xJvgVJiDQ5JFb7Ho7uH1OqThtTQAMTi?usp=sharing
+
 Run these commands from the project root. Python 3.11 is recommended. Install dependencies if this is a fresh clone:
 
 ```powershell
