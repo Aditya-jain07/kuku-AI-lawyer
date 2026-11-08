@@ -18,7 +18,7 @@ notepad .env
 
 In the opened file, set `GROQ_API_KEY` to **your own Groq API key**, and save it. `LLM_MODEL=openai/gpt-oss-120b` in the template is the model served through Groq; use an ID your Groq account can access. Do not put a real key in `.env.example` or commit `.env` to GitHub.
 
-If this repository includes `vector_store/index.faiss` and its matching metadata, start the app:
+start the app:
 
 ```powershell
 .\.venv\Scripts\python.exe -m streamlit run app.py
