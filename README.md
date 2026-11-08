@@ -1,14 +1,40 @@
 # Kuku AI Legal & Citizen Assistance
 
+## Quick start (Windows PowerShell)
+
+Run these commands from the project root. Python 3.11 is recommended. Install dependencies if this is a fresh clone:
+
+```powershell
+py -3.11 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+Create a private `.env` file from the provided template:
+
+```powershell
+Copy-Item .env.example .env
+notepad .env
+```
+
+In the opened file, set `GROQ_API_KEY` to **your own Groq API key**, and save it. `LLM_MODEL=openai/gpt-oss-120b` in the template is the model served through Groq; use an ID your Groq account can access. Do not put a real key in `.env.example` or commit `.env` to GitHub.
+
+If this repository includes `vector_store/index.faiss` and its matching metadata, start the app:
+
+```powershell
+.\.venv\Scripts\python.exe -m streamlit run app.py
+```
+
+Open the local URL shown in the terminal. If the index is missing or you change documents, follow [Installation and execution](#installation-and-execution) to rebuild and validate it. Read the [project summary](kuku_project_summary.pdf) for a short overview.
+
 A conversational **retrieval-augmented generation (RAG)** application that helps people understand everyday Indian citizen issues using a curated collection of Acts, government guides and FAQs.
 
-Kuku combines **Streamlit**, **Groq-hosted language and speech models**, and local **multilingual embeddings, FAISS, BM25 and cross-encoder reranking**. It supports text, voice, source references and persistent conversations.
+Built under Kuku, the authority conducting this project, this application combines **Streamlit**, **Groq-hosted language and speech models**, and local **multilingual embeddings, FAISS, BM25 and cross-encoder reranking**. It supports text, voice, source references and persistent conversations.
 
-> Kuku provides legal information and practical assistance. It is not a substitute for a qualified lawyer. Its document-integrity checks do not establish legal accuracy, current applicability or completeness of coverage.
+> This assistant provides legal information and practical assistance. It is not a substitute for a qualified lawyer. Its document-integrity checks do not establish legal accuracy, current applicability or completeness of coverage.
 
 ## Contents
 
-- [Why Kuku?](#why-kuku)
+- [Why this project?](#why-this-project)
 - [Features and scope](#features-and-scope)
 - [Architecture](#architecture)
 - [Models and technology](#models-and-technology)
@@ -23,11 +49,11 @@ Kuku combines **Streamlit**, **Groq-hosted language and speech models**, and loc
 - [Data handling and limitations](#data-handling-and-limitations)
 - [Future improvements](#future-improvements)
 
-## Why Kuku?
+## Why this project?
 
 People dealing with unpaid salary, rental deposits, consumer disputes or banking complaints often need an understandable first step. Relevant information is spread across long legal documents, unfamiliar terminology and multiple government websites.
 
-Kuku makes a selected document collection searchable through conversation. The goal is to provide short, useful replies, retain relevant facts within a chat, and help with practical tasks such as drafting a message or organizing records.
+This assistant makes a selected document collection searchable through conversation. The goal is to provide short, useful replies, retain relevant facts within a chat, and help with practical tasks such as drafting a message or organizing records.
 
 ### Why RAG?
 
@@ -198,6 +224,7 @@ kuku/
     config.py
     requirements.txt
     README.md
+    kuku_project_summary.pdf     # Project overview (PDF)
     .env.example
     .env                         # Local secret configuration; do not commit
     .gitignore
