@@ -1,0 +1,23 @@
+{
+  "schema_version": 2,
+  "generation_id": "5d20e2044e734d989472da846b23c622",
+  "created_at": "2026-11-08T10:51:40.828043+00:00",
+  "embedding_model": "intfloat/multilingual-e5-small",
+  "embedding_model_revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+  "embedding_dim": 384,
+  "embedding_dtype": "float32",
+  "metric": "cosine_similarity",
+  "normalized_embeddings": true,
+  "passage_prefix": "passage: ",
+  "query_prefix": "query: ",
+  "indexed_text_field": "text",
+  "chunk_count": 11335,
+  "source_chunks": "C:\\Users\\ajjai\\Desktop\\kuku\\processed\\chunks.jsonl",
+  "source_chunks_sha256": "1c41fedb157e76dc1b0b50869f65a40152ee3cd0f3c054868aae2fac07c9419a",
+  "index_sha256": "1232e962bc92c6a71c7816e01d71692f8369c22085f9473b5dfb0e22cf7cbf59",
+  "metadata_sha256": "1c41fedb157e76dc1b0b50869f65a40152ee3cd0f3c054868aae2fac07c9419a",
+  "metadata_json_sha256": "d8c41cd10bd92a9a8e4bfd7d18794ae9007cc83b2efc2ad2e8b817d7e8e0186a",
+  "model_max_seq_length": 512,
+  "sentence_transformers_version": "3.4.1",
+  "faiss_version": "1.15.1"
+}

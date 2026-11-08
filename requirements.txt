@@ -1,0 +1,33 @@
+# Recommended project runtime: Python 3.11
+# These are version ranges, not a reproducible deployment lockfile.
+
+# Web application
+streamlit>=1.40.0,<2.0.0
+
+# Groq API: answer generation and Whisper transcription
+groq>=0.11.0,<2.0.0
+
+# Environment configuration
+python-dotenv>=1.0.1,<2.0.0
+
+# PDF extraction
+PyMuPDF>=1.24.0,<2.0.0
+
+# Local embeddings and cross-encoder reranking
+# Keep the original 3.x / 4.x API families while reviewing the code.
+sentence-transformers>=3.4.1,<4.0.0
+transformers>=4.44.0,<5.0.0
+torch>=2.2.0,<3.0.0
+
+# Optional slow-tokenizer support for SentencePiece-based models
+sentencepiece>=0.2.0,<1.0.0
+
+# BM25 keyword retrieval for hybrid search
+rank-bm25==0.2.2
+
+# Local vector search and numerical processing
+faiss-cpu>=1.9.0,<2.0.0
+numpy>=1.26.0,<3.0.0
+
+# Data processing and tabular exports
+pandas>=2.2.0,<3.0.0
