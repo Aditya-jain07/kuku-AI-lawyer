@@ -62,7 +62,7 @@ _PRACTICAL_REQUEST = re.compile(
 _DRAFT_REQUEST = re.compile(
     r"(?:^|[.!?;]\s+|\band\s+|\b(?:could|can|would|will) you\s+|"
     r"\bhelp me\s+|\b(?:i want you|i['’]d like you) to\s+)"
-    r"[\s“\"']*(?:please\s+)?(?:draft|write|rewrite|revise|compose|prepare)\b"
+    r"[\s“\"']*(?:please\s+)?(?:draft|write|rewrite|revise|update|compose|prepare)\b"
     r"[^.!?\n]{0,90}\b(?:one|it|message|e-?mail|letter|text|whatsapp|draft|"
     r"subject line|notice|complaint|application)\b"
     r"|\b(?:give me|show me|i (?:want|need))\b[^.!?\n]{0,70}"
@@ -72,6 +72,13 @@ _DRAFT_REQUEST = re.compile(
     r"|\bwhat subject line (?:should|can) i use\b"
     r"|(?:ईमेल|पत्र|मैसेज|संदेश)[^.!?\n।]{0,40}(?:लिख दो|लिख दें|लिखिए|बना दो|बना दें)"
     r"|\b(?:e-?mail|message|letter)[^.!?\n]{0,40}\b(?:likh|bana) (?:do|dijiye)\b",
+    re.I,
+)
+_PLAIN_MESSAGE = re.compile(r"\b(?:whatsapp|message|e-?mail|text message)\b", re.I)
+_DRAFT_NEEDS_SOURCES = re.compile(
+    r"\b(?:legal|law|statutory|formal notice|complaint|appeal|deadline|"
+    r"cite|citations?|sources?|provisions?)\b|"
+    r"\b(?:also|and)\s+(?:tell|explain|show|list|check|what|where|when|how|can|should)\b",
     re.I,
 )
 _DRAFT_LAYOUT = re.compile(
@@ -393,6 +400,7 @@ class AssistantService:
     @staticmethod
     def _has_uncited_specific_claims(
         answer: str, user_text: str = "", *, practical: bool = False,
+        plain_draft: bool = False,
     ) -> bool:
         """Screen individual sentences/lines; this does not check entailment."""
         stated_amounts = {amount.replace(",", "") for amount in _RUPEE_AMOUNT.findall(user_text)}
@@ -410,7 +418,7 @@ class AssistantService:
                 practical_amount = _PRACTICAL_REQUEST.match(unit) or (
                     practical and _PRACTICAL_AMOUNT_CONTEXT.search(unit)
                 )
-                if practical_amount and amounts <= stated_amounts:
+                if (plain_draft or practical_amount) and amounts <= stated_amounts:
                     continue
             if _UNCERTAIN.search(unit) and not deadlines and not _HARD_DETAIL.search(unit):
                 continue
@@ -448,6 +456,18 @@ class AssistantService:
         last_request = next((item["content"] for item in reversed(history)
                              if item["role"] == "user"), "")
         return bool(_DRAFT_LAYOUT.search(last_answer) or _DRAFT_REQUEST.search(last_request))
+
+    @classmethod
+    def _plain_message_draft(cls, text: str, case: CaseState) -> bool:
+        """Route ordinary messages separately from requests for legal analysis."""
+        return bool(
+            _PLAIN_MESSAGE.search(text)
+            and cls._draft_requested(text, case)
+            and not _RECORDS_REQUEST.search(text)
+            and not _DRAFT_NEEDS_SOURCES.search(text)
+            and not _LEGAL_DETAIL.search(text)
+            and not deadline_mentions(text)
+        )
 
     @classmethod
     def _records_only(cls, text: str, case: CaseState) -> bool:
@@ -533,7 +553,7 @@ class AssistantService:
 
     def _generate_answer(self, text: str, case: CaseState,
                          evidence: list[RetrievedChunk], *,
-                         records_only: bool = False) -> tuple[str, list[str]]:
+                         records_only: bool = False, plain_draft: bool = False) -> tuple[str, list[str]]:
         evidence = self._select_evidence(evidence)
         drafting = self._draft_requested(text, case)
         recordkeeping = records_only or bool(_RECORDS_REQUEST.search(text))
@@ -559,6 +579,13 @@ class AssistantService:
             style += (
                 " Give guidance addressed directly to the user. "
                 "Do not include a copy-ready email, letter, or message."
+            )
+        if plain_draft:
+            style += (
+                " Output only the copy-ready message in the requested tone. "
+                "Use the user's latest facts and corrections. Repeat amounts supplied "
+                "by the user only if they apply to the message. Leave out citations, "
+                "statutes, legal obligations, and legal deadlines."
             )
         if drafting and recordkeeping:
             style += (
@@ -624,7 +651,9 @@ class AssistantService:
                 problems.append("unknown citation ID")
             if audit["malformed_citations"]:
                 problems.append("malformed citation")
-            if self._has_uncited_specific_claims(answer, amount_context, practical=practical):
+            if self._has_uncited_specific_claims(
+                answer, amount_context, practical=practical, plain_draft=plain_draft,
+            ):
                 problems.append("uncited specific claim")
             if has_unmatched_cited_deadline(answer, passages):
                 problems.append("cited passage does not show the stated deadline duration")
@@ -734,11 +763,13 @@ class AssistantService:
                 "Would you like help drafting it?"
             )
         records_only = self._records_only(text, case)
-        if not self.retriever.ready and not records_only:
+        plain_draft = self._plain_message_draft(text, case)
+        skip_retrieval = records_only or plain_draft
+        if not skip_retrieval and not self.retriever.ready:
             return finish("The legal document collection is unavailable right now. Please try again once it is ready.",
                           status="index_not_ready")
 
-        evidence = [] if records_only else self._select_evidence(
+        evidence = [] if skip_retrieval else self._select_evidence(
             self.retriever.search(self._retrieval_query(text, case))
         )
         if not evidence and not (
@@ -752,7 +783,9 @@ class AssistantService:
             return finish(answer, status="insufficient_evidence")
 
         # Client/API errors propagate to app.py; never fabricate a legal answer.
-        answer, generation_warnings = self._generate_answer(text, case, evidence, records_only=records_only)
+        answer, generation_warnings = self._generate_answer(
+            text, case, evidence, records_only=records_only, plain_draft=plain_draft,
+        )
         notices.extend(generation_warnings)
         cited = set(extract_citations(answer))
         used_sources = [item for item in evidence if item.citation_id in cited]
